@@ -32,6 +32,7 @@ public class Dynamic {
      */
     public static int optimalLossDynamic(int[] hourlyVolume,
             int[] fullServiceCapacity, int [] regularServiceCapacity, int[] minorServiceCapacity) {
+
         return -1; // REMOVE THIS LINE AND WRITE THIS METHOD
     }
 

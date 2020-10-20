@@ -90,7 +90,13 @@ public class Recursive {
         }
 
         // calc loss so far
-        int loss = hourlyVolume[currentHour] - capacity[hoursSinceServiceIdx];
+        int loss;
+        if (hoursSinceService < 0) {
+            // out of order due to service
+            loss = hourlyVolume[currentHour];
+        } else {
+            loss = hourlyVolume[currentHour] - capacity[hoursSinceServiceIdx];
+        }
         if (loss < 0) {
             // we've made no loss
             loss = 0;
@@ -102,11 +108,11 @@ public class Recursive {
         int nextNoService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
                 minorServiceCapacity, nextHr, lastService, hoursSinceService + 1);
         int nextMinService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, 0);
+                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, -1);
         int nextRegService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, 0);
+                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, -2);
         int nextFullService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.FULL_SERVICE, 0);
+                minorServiceCapacity, nextHr, Service.FULL_SERVICE, -4);
 
         int[] results = {nextNoService, nextMinService, nextRegService, nextFullService};
         int m = Integer.MAX_VALUE;
