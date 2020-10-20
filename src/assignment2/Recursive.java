@@ -66,6 +66,57 @@ public class Recursive {
     private static int optimalLossRecursive(int[] hourlyVolume,
             int[] fullServiceCapacity, int [] regularServiceCapacity,
             int[] minorServiceCapacity, int currentHour, Service lastService, int hoursSinceService) {
-        return -1; //REMOVE THIS LINE AND WRITE THIS METHOD
+
+        int k = hourlyVolume.length;
+        if (currentHour == k) {
+            // we've exhausted our hours
+            return 0;
+        }
+        // pick the right capacity
+        int[] capacity;
+        if (lastService.equals(Service.FULL_SERVICE)) {
+            capacity = fullServiceCapacity;
+        } else if (lastService.equals(Service.REGULAR_SERVICE)) {
+            capacity = regularServiceCapacity;
+        } else {
+            capacity = minorServiceCapacity;
+        }
+
+        // consider if hoursSinceService is valid index
+        int l = capacity.length;
+        int hoursSinceServiceIdx = hoursSinceService;
+        if (!(hoursSinceServiceIdx < l)) {
+            hoursSinceServiceIdx = l-1; // last index
+        }
+
+        // calc loss so far
+        int loss = hourlyVolume[currentHour] - capacity[hoursSinceServiceIdx];
+        if (loss < 0) {
+            // we've made no loss
+            loss = 0;
+        }
+
+        // assume we have optimal loss upto now, and we have to decide for next hour
+        int nextHr = currentHour +1;
+
+        int nextNoService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, lastService, hoursSinceService + 1);
+        int nextMinService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, 0);
+        int nextRegService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, 0);
+        int nextFullService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.FULL_SERVICE, 0);
+
+        int[] results = {nextNoService, nextMinService, nextRegService, nextFullService};
+        int m = Integer.MAX_VALUE;
+        for (int i: results) {
+            if (i < m) {
+                m = i;
+            }
+        }
+        return m;
+
+//        return -1; //REMOVE THIS LINE AND WRITE THIS METHOD
     }
 }
