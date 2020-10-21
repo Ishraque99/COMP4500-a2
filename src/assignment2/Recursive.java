@@ -84,18 +84,16 @@ public class Recursive {
 
         // consider if hoursSinceService is valid index
         int l = capacity.length;
-        int hoursSinceServiceIdx = hoursSinceService;
-        if (!(hoursSinceServiceIdx < l)) {
-            hoursSinceServiceIdx = l-1; // last index
-        }
-
         // calc loss so far
         int loss;
         if (hoursSinceService < 0) {
             // out of order due to service
             loss = hourlyVolume[currentHour];
+        } else if (hoursSinceService >= l) {
+            // out of order due to lack of service
+            loss = hourlyVolume[currentHour];
         } else {
-            loss = hourlyVolume[currentHour] - capacity[hoursSinceServiceIdx];
+            loss = hourlyVolume[currentHour] - capacity[hoursSinceService];
         }
         if (loss < 0) {
             // we've made no loss
