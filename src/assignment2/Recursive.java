@@ -72,6 +72,37 @@ public class Recursive {
             // we've exhausted our hours
             return 0;
         }
+
+        int loss = lossFn(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity,
+                currentHour, lastService, hoursSinceService);
+
+        // assume we have optimal loss upto now, and we have to decide for next hour
+        int nextHr = currentHour +1;
+
+        int nextNoService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, lastService, hoursSinceService + 1);
+        int nextMinService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, -1);
+        int nextRegService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, -2);
+        int nextFullService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.FULL_SERVICE, -4);
+
+        int[] results = {nextNoService, nextMinService, nextRegService, nextFullService};
+        int m = Integer.MAX_VALUE;
+        for (int i: results) {
+            if (i < m) {
+                m = i;
+            }
+        }
+        return m;
+
+//        return -1; //REMOVE THIS LINE AND WRITE THIS METHOD
+    }
+
+    private static int lossFn(int[] hourlyVolume, int[] fullServiceCapacity, int [] regularServiceCapacity,
+                               int[] minorServiceCapacity, int currentHour, Service lastService,
+                               int hoursSinceService) {
         // pick the right capacity
         int[] capacity;
         if (lastService.equals(Service.FULL_SERVICE)) {
@@ -100,27 +131,6 @@ public class Recursive {
             loss = 0;
         }
 
-        // assume we have optimal loss upto now, and we have to decide for next hour
-        int nextHr = currentHour +1;
-
-        int nextNoService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, lastService, hoursSinceService + 1);
-        int nextMinService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, -1);
-        int nextRegService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, -2);
-        int nextFullService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.FULL_SERVICE, -4);
-
-        int[] results = {nextNoService, nextMinService, nextRegService, nextFullService};
-        int m = Integer.MAX_VALUE;
-        for (int i: results) {
-            if (i < m) {
-                m = i;
-            }
-        }
-        return m;
-
-//        return -1; //REMOVE THIS LINE AND WRITE THIS METHOD
+        return loss;
     }
 }

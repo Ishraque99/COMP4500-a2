@@ -33,7 +33,99 @@ public class Dynamic {
     public static int optimalLossDynamic(int[] hourlyVolume,
             int[] fullServiceCapacity, int [] regularServiceCapacity, int[] minorServiceCapacity) {
 
-        return -1; // REMOVE THIS LINE AND WRITE THIS METHOD
+        int totalHours = hourlyVolume.length;
+
+        // NOTE: extend each service array to include waiting time for servicing.
+        // Thus we don't need to consider a separate entry for out of service state
+        ArrayList<Integer> fulCapWithWait = new ArrayList<>();
+        for (int i = 0; i < 4; i++) { fulCapWithWait.add(0); }
+        for (int x: fullServiceCapacity) { fulCapWithWait.add(x); }
+
+        ArrayList<Integer> regCapWithWait = new ArrayList<>();
+        for (int i = 0; i < 2; i++) { regCapWithWait.add(0); }
+        for (int x: regularServiceCapacity) { regCapWithWait.add(x); }
+
+        ArrayList<Integer> minCapWithWait = new ArrayList<>();
+        for (int i = 0; i < 1; i++) { minCapWithWait.add(0); }
+        for (int x: minorServiceCapacity) { minCapWithWait.add(x); }
+
+        HashMap<Integer, ArrayList<Integer>> serviceMap = new HashMap<>();
+        serviceMap.put(0, minCapWithWait); // minor service
+        serviceMap.put(1, regCapWithWait); // regular service
+        serviceMap.put(2, fulCapWithWait); // full service
+
+
+        // our base case is currentHour==k then return 0
+        ArrayList<ArrayList<ArrayList<Integer>>> lossMatrix = new ArrayList<>();
+
+        for (int i=0; i < totalHours + 1; i++) {
+            lossMatrix.add(new ArrayList<>());
+            for (int j=0; j < 3; j++) {
+                lossMatrix.get(i).add(new ArrayList<>());
+                int cap;
+                if (j==0) {
+                    cap = minCapWithWait.size();
+                } else if (j==1) {
+                    cap = regCapWithWait.size();
+                } else { // j==2
+                    cap = fulCapWithWait.size();
+                }
+                for (int k = 0; k < cap; k++) {
+                    if (i==totalHours) {
+                        lossMatrix.get(i).get(j).add(0);
+                    } else {
+                        lossMatrix.get(i).get(j).add(Integer.MAX_VALUE); // placeholder
+                    }
+                }
+            }
+        }
+
+        // calculate values
+        for (int i=totalHours-1; i>=0; i--) {
+            // start at the end
+            for (int j = 0; j < 3; j++) {
+                int cap;
+                if (j==0) {
+                    cap = minCapWithWait.size();
+                } else if (j==1) {
+                    cap = regCapWithWait.size();
+                } else { // j==2
+                    cap = fulCapWithWait.size();
+                }
+                for (int k = 0; k<cap; k++) {
+                    int thisLoss = hourlyVolume[i] - serviceMap.get(j).get(k);
+                    if (thisLoss < 0) { // min floor for loss val
+                        thisLoss = 0;
+                    }
+                    if (k==cap-1) {
+                        // if k is last value of index, it depends on the next hour service
+                        // of which there are 3 possible
+                        int serv1Loss = lossMatrix.get(i+1).get(0).get(0);
+                        int serv2Loss = lossMatrix.get(i+1).get(1).get(0);
+                        int serv3Loss = lossMatrix.get(i+1).get(2).get(0);
+
+                        int finalLoss = Math.min(serv1Loss, Math.min(serv2Loss, serv3Loss)) + thisLoss;
+                        lossMatrix.get(i).get(j).set(k, finalLoss);
+                    } else {
+                        int lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
+                        int finalLoss = thisLoss + lastLoss;
+                        lossMatrix.get(i).get(j).set(k, finalLoss);
+                    }
+                }
+            }
+        }
+
+
+//        int m = Integer.MAX_VALUE;
+//        for (int i: lossMatrix.get(0).get(2)) {
+//            if (i<m) {
+//                m = i;
+//            }
+//        }
+
+
+
+        return lossMatrix.get(0).get(2).get(4); // REMOVE THIS LINE AND WRITE THIS METHOD
     }
 
 
