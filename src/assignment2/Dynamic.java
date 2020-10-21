@@ -54,10 +54,8 @@ public class Dynamic {
         serviceMap.put(1, regCapWithWait); // regular service
         serviceMap.put(2, fulCapWithWait); // full service
 
-
-        // our base case is currentHour==k then return 0
         ArrayList<ArrayList<ArrayList<Integer>>> lossMatrix = new ArrayList<>();
-
+        // our base case is currentHour==k then return 0
         for (int i=0; i < totalHours + 1; i++) {
             lossMatrix.add(new ArrayList<>());
             for (int j=0; j < 3; j++) {
@@ -81,8 +79,7 @@ public class Dynamic {
         }
 
         // calculate values
-        for (int i=totalHours-1; i>=0; i--) {
-            // start at the end
+        for (int i=totalHours-1; i>=0; i--) { // start at the end
             for (int j = 0; j < 3; j++) {
                 int cap;
                 if (j==0) {
@@ -94,9 +91,7 @@ public class Dynamic {
                 }
                 for (int k = 0; k<cap; k++) {
                     int thisLoss = hourlyVolume[i] - serviceMap.get(j).get(k);
-                    if (thisLoss < 0) { // min floor for loss val
-                        thisLoss = 0;
-                    }
+                    if (thisLoss < 0) { thisLoss = 0; } // min floor for loss val
                     if (k==cap-1) {
                         // if k is last value of index, it depends on the next hour service
                         // of which there are 3 possible
@@ -107,24 +102,20 @@ public class Dynamic {
                         int finalLoss = Math.min(serv1Loss, Math.min(serv2Loss, serv3Loss)) + thisLoss;
                         lossMatrix.get(i).get(j).set(k, finalLoss);
                     } else {
+                        // else it depends on next hour service start, or just the next second of the same service
+                        int serv1Loss = lossMatrix.get(i+1).get(0).get(0);
+                        int serv2Loss = lossMatrix.get(i+1).get(1).get(0);
+                        int serv3Loss = lossMatrix.get(i+1).get(2).get(0);
+
                         int lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
-                        int finalLoss = thisLoss + lastLoss;
+                        int finalLoss = thisLoss + Math.min(serv1Loss, Math.min(serv2Loss, Math.min(serv3Loss, lastLoss)));
                         lossMatrix.get(i).get(j).set(k, finalLoss);
                     }
                 }
             }
         }
 
-
-//        int m = Integer.MAX_VALUE;
-//        for (int i: lossMatrix.get(0).get(2)) {
-//            if (i<m) {
-//                m = i;
-//            }
-//        }
-
-
-
+        // we want to return t=0 with a recent full service
         return lossMatrix.get(0).get(2).get(4); // REMOVE THIS LINE AND WRITE THIS METHOD
     }
 
