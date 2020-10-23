@@ -68,10 +68,7 @@ public class Recursive {
             int[] minorServiceCapacity, int currentHour, Service lastService, int hoursSinceService) {
 
         int k = hourlyVolume.length;
-        if (currentHour == k) {
-            // we've exhausted our hours
-            return 0;
-        }
+        if (currentHour == k) { return 0; } // we've exhausted our hours
 
         int loss = lossFn(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity,
                 currentHour, lastService, hoursSinceService);
