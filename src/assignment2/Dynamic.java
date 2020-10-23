@@ -34,12 +34,14 @@ public class Dynamic {
             int[] fullServiceCapacity, int [] regularServiceCapacity, int[] minorServiceCapacity) {
 
         int totalHours = hourlyVolume.length;
+//        if (fullServiceCapacity.length == 0) { return 0; }
 
         // NOTE: extend each service array to include waiting time for servicing.
         // Thus we don't need to consider a separate entry for out of service state
         ArrayList<Integer> fulCapWithWait = new ArrayList<>();
         for (int i = 0; i < 4; i++) { fulCapWithWait.add(0); }
         for (int x: fullServiceCapacity) { fulCapWithWait.add(x); }
+        if (fullServiceCapacity.length == 0) { fulCapWithWait.add(0); }
 
         ArrayList<Integer> regCapWithWait = new ArrayList<>();
         for (int i = 0; i < 2; i++) { regCapWithWait.add(0); }
