@@ -1,6 +1,7 @@
 package assignment2.test;
 
 import assignment2.Dynamic;
+import assignment2.Recursive;
 import assignment2.Service;
 import org.junit.Assert;
 import org.junit.Test;
@@ -26,10 +27,45 @@ public class DynamicTest {
         int[] fullServiceCapacity = {100,90,80,70,60,50,40,30,20,10};
         int[] regularServiceCapacity = {70,50,40,30,20,10};
         int[] minorServiceCapacity = {50,40,20,10};
-        int expectedResult = 75;
+        int expectedResult = 55;
 
         Assert.assertEquals(expectedResult, Dynamic.optimalLossDynamic(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity));
     }
+
+    @Test
+    public void exampleBreakingTest1() {
+        int[] hourlyVolume =       {220, 476, 215, 293, 557, 719, 346, 457, 865};
+        int[] fullServiceCapacity = {277, 960, 673, 763, 576};
+        int[] regularServiceCapacity = {262};
+        int[] minorServiceCapacity = {};
+        int expectedResult = 1773;
+
+        Assert.assertEquals(expectedResult, Dynamic.optimalLossDynamic(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity));
+    }
+
+    @Test
+    public void exampleBreakingTest1Services() {
+        int[] hourlyVolume =       {220, 476, 215, 293, 557, 719, 346, 457, 865};
+        int[] fullServiceCapacity = {277, 960, 673, 763, 576};
+        int[] regularServiceCapacity = {262};
+        int[] minorServiceCapacity = {};
+        int expectedResult = 1773;
+
+        checkServicesResult(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity, expectedResult);
+    }
+
+    @Test
+    public void exampleBreakingServ2() {
+        int[] hourlyVolume =       {332, 402, 130, 1, 313, 892, 367, 911};
+        int[] fullServiceCapacity = {236};
+        int[] regularServiceCapacity = {244, 737, 180, 134, 382, 489, 389, 739};
+        int[] minorServiceCapacity = {153, 89, 396, 3, 137, 294, 143, 950};
+        int expectedResult = Recursive.optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity);
+
+        checkServicesResult(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity, expectedResult);
+    }
+
+
 
     @Test
     public void dynTest() {

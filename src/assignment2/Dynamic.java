@@ -42,8 +42,9 @@ public class Dynamic {
         // we want to return t=0 with a recent full service, or start of service
         int minCapAt0 = lossMatrix.get(0).get(0).get(0);
         int regCapAt0 = lossMatrix.get(0).get(1).get(0);
-        int fulCapAt0 = lossMatrix.get(0).get(2).get(4);
-        return Math.min(minCapAt0, Math.min(regCapAt0, fulCapAt0));
+        int fulCapAt0 = lossMatrix.get(0).get(2).get(0);
+        int afterFulAt0 = lossMatrix.get(0).get(2).get(4);
+        return Math.min(minCapAt0, Math.min(regCapAt0, Math.min(fulCapAt0, afterFulAt0)));
     }
 
     private static ArrayList<ArrayList<ArrayList<Integer>>> generateLossMatrix(int[] hourlyVolume,
@@ -82,19 +83,12 @@ public class Dynamic {
             lossMatrix.add(new ArrayList<>());
             for (int j=0; j < 3; j++) {
                 lossMatrix.get(i).add(new ArrayList<>());
-                int cap;
-                if (j==0) {
-                    cap = minCapWithWait.size();
-                } else if (j==1) {
-                    cap = regCapWithWait.size();
-                } else { // j==2
-                    cap = fulCapWithWait.size();
-                }
+                int cap = serviceMap.get(j).size();
                 for (int k = 0; k < cap; k++) {
                     if (i==totalHours) {
                         lossMatrix.get(i).get(j).add(0);
                     } else {
-                        lossMatrix.get(i).get(j).add(Integer.MAX_VALUE); // placeholder
+                        lossMatrix.get(i).get(j).add(-1); // placeholder
                     }
                 }
             }
@@ -175,78 +169,161 @@ public class Dynamic {
             int[] fullServiceCapacity, int [] regularServiceCapacity, int[] minorServiceCapacity) {
         int totalHours = hourlyVolume.length;
         Service[] results = new Service[totalHours];
-        ArrayList<ArrayList<ArrayList<Integer>>> lossMatrix = generateLossMatrix(hourlyVolume,
-                fullServiceCapacity, regularServiceCapacity, minorServiceCapacity);
+        if (totalHours == 0) { return results; }
 
-        // assuming we start with a full service just done
-        int j = 2;
-        int k = 4;
-        for (int i = 0; i < totalHours; i++) {
-            int fullCap = lossMatrix.get(i).get(2).size();
-            int regCap = lossMatrix.get(i).get(1).size();
-            int minCap = lossMatrix.get(i).get(0).size();
-            int thisCap = lossMatrix.get(i).get(j).size();
+        // NOTE: extend each service array to include waiting time for servicing.
+        // Thus we don't need to consider a separate entry for out of service state
+        ArrayList<Integer> fulCapWithWait = new ArrayList<>();
+        for (int i = 0; i < 4; i++) { fulCapWithWait.add(0); }
+        for (int i = 0; i < Math.min(fullServiceCapacity.length, hourlyVolume.length); i++) {
+            fulCapWithWait.add(fullServiceCapacity[i]);
+        }
+        if (fullServiceCapacity.length == 0) { fulCapWithWait.add(0); } // if fullService is empty we need valid index
 
-            int noServ = lossMatrix.get(i).get(j).get(k);
-            int minServStart = lossMatrix.get(i).get(0).get(0);
-            int regServStart = lossMatrix.get(i).get(1).get(0);
-            int fulServStart = lossMatrix.get(i).get(2).get(0);
+        ArrayList<Integer> regCapWithWait = new ArrayList<>();
+        for (int i = 0; i < 2; i++) { regCapWithWait.add(0); }
+        for (int i = 0; i < Math.min(regularServiceCapacity.length, hourlyVolume.length); i++) {
+            regCapWithWait.add(regularServiceCapacity[i]);
+        }
 
-            int[] check = {noServ, minServStart, regServStart, fulServStart};
-            int m = Integer.MAX_VALUE;
-            int idx = -1;
-            for (int l = 0; l<4; l++) {
-                if (check[l] < m) {
-                    m = check[l];
-                    idx = l;
-                }
-            }
+        ArrayList<Integer> minCapWithWait = new ArrayList<>();
+        for (int i = 0; i < 1; i++) { minCapWithWait.add(0); }
+        for (int i = 0; i < Math.min(minorServiceCapacity.length, hourlyVolume.length); i++) {
+            minCapWithWait.add(minorServiceCapacity[i]);
+        }
 
-            if (idx == 1) {
-                results[i] = Service.MINOR_SERVICE;
-                j = 0;
-                k = 1;
-            } else if (idx == 2) {
-                results[i] = Service.REGULAR_SERVICE;
-                j = 1;
-                k = 1;
-            } else if (idx == 3) {
-                results[i] = Service.FULL_SERVICE;
-                j = 2;
-                k = 1;
-            } else { // idx == 0
-                if (j==0 && k < 1) {
-                    results[i] = Service.MINOR_SERVICE;
-                } else if (j==1 && k < 2) {
-                    results[i] = Service.REGULAR_SERVICE;
-                } else if (j==2 && k < 4) {
-                    results[i] = Service.FULL_SERVICE;
-                } else {
-                    results[i] = null;
-                }
-                if (k == thisCap-1) {
-                    int nextMinServStart = lossMatrix.get(i+1).get(0).get(0);
-                    int nextRegServStart = lossMatrix.get(i+1).get(1).get(0);
-                    int nextFulServStart = lossMatrix.get(i+1).get(2).get(0);
+        HashMap<Integer, ArrayList<Integer>> serviceMap = new HashMap<>();
+        serviceMap.put(0, minCapWithWait); // minor service
+        serviceMap.put(1, regCapWithWait); // regular service
+        serviceMap.put(2, fulCapWithWait); // full service
 
-                    int[] check2 = {nextMinServStart, nextRegServStart, nextFulServStart};
-                    int m2 = Integer.MAX_VALUE;
-                    int idx2 = -1;
-                    for (int l = 0; l<3; l++) {
-                        if (check2[l] < m2) {
-                            m2 = check[l];
-                            idx2 = l;
-                        }
+        ArrayList<ArrayList<ArrayList<A2Element>>> lossMatrix = new ArrayList<>();
+        // our base case is currentHour==k then return 0
+        for (int i=0; i < totalHours + 1; i++) {
+            lossMatrix.add(new ArrayList<>());
+            for (int j=0; j < 3; j++) {
+                lossMatrix.get(i).add(new ArrayList<>());
+                int cap = serviceMap.get(j).size();
+                for (int k = 0; k < cap; k++) {
+                    if (i==totalHours) {
+                        lossMatrix.get(i).get(j).add(new A2Element(0, -1, -1));
+                    } else {
+                        lossMatrix.get(i).get(j).add(null); // placeholder
                     }
-                    j = idx2;
-                    k = 0;
-                } else {
-                    k++;
                 }
             }
         }
 
+        // calculate values
+        for (int i=totalHours-1; i>=0; i--) { // start at the end
+            for (int j = 0; j < 3; j++) {
+                int cap = lossMatrix.get(i).get(j).size();
+                for (int k = 0; k<cap; k++) {
+                    int thisLoss = hourlyVolume[i] - serviceMap.get(j).get(k);
+                    if (thisLoss < 0) { thisLoss = 0; } // min floor for loss val
+                    A2Element serv1Loss = lossMatrix.get(i+1).get(0).get(0); // min
+                    A2Element serv2Loss = lossMatrix.get(i+1).get(1).get(0); // reg
+                    A2Element serv3Loss = lossMatrix.get(i+1).get(2).get(0); // ful
+                    if (k==cap-1) {
+                        // if k is last value of index, it depends on the next hour service
+                        // of which there are 3 possible
+                        A2Element[] check = {serv1Loss, serv2Loss, serv3Loss};
+
+                        int idx = -1;
+                        int m = Integer.MAX_VALUE;
+                        for (int l = 0; l < 3; l++) { if (check[l].val < m) { m = check[l].val; idx = l; } }
+
+                        int finalLoss = m + thisLoss;
+                        lossMatrix.get(i).get(j).set(k, new A2Element(finalLoss, idx, 0));
+                    } else {
+                        // else it depends on next hour service start, or just the next second of the same service
+                        A2Element lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
+                        A2Element[] check = {serv1Loss, serv2Loss, serv3Loss, lastLoss};
+
+                        int idx = -1;
+                        int m = Integer.MAX_VALUE;
+                        int nextK = 0;
+                        for (int l = 0; l < 4; l++) {
+                            if (check[l].val < m) {
+                                m = check[l].val;
+                                idx = l;
+                            }
+                        }
+                        if (idx==3) {
+                            idx = j;
+                            nextK = k+1;
+                        }
+
+                        int finalLoss = thisLoss + m;
+                        lossMatrix.get(i).get(j).set(k, new A2Element(finalLoss, idx, nextK));
+                    }
+                }
+            }
+        }
+
+//        System.out.println(lossMatrix);
+        // we want to return t=0 with a recent full service, or start of service
+        int j = 2;
+        int k = 4;
+        A2Element minCapAt0 = lossMatrix.get(0).get(0).get(0);
+        A2Element regCapAt0 = lossMatrix.get(0).get(1).get(0);
+        A2Element fulCapAt0 = lossMatrix.get(0).get(2).get(0);
+        A2Element afterFulAt0 = lossMatrix.get(0).get(j).get(k);
+        A2Element[] check = {minCapAt0, regCapAt0, fulCapAt0, afterFulAt0};
+//        System.out.println(String.format("Init Check : %s, %s, %s, %s", check[0], check[1], check[2], check[3]));
+        int idx = -1;
+        int m = Integer.MAX_VALUE;
+        for (int l = 0; l < 4; l++) {
+            if (check[l].val < m) {
+                m = check[l].val;
+                idx = l;
+            }
+        }
+//        System.out.println(String.format("Idx: %s", idx));
+        if (idx == 0) {
+            results[0] = Service.MINOR_SERVICE;
+        } else if (idx == 1) {
+            results[0] = Service.REGULAR_SERVICE;
+        } else if (idx == 2) {
+            results[0] = Service.FULL_SERVICE;
+        } else {
+            results[0] = null;
+        }
+        j = check[idx].jCoord;
+        k = check[idx].kCoord;
+        for (int i = 1; i < totalHours; i++) {
+//            System.out.println(String.format("j: %s, k: %s", j, k));
+            if (j==0 && k < 1) {
+                results[i] = Service.MINOR_SERVICE;
+            } else if (j==1 && k < 2) {
+                results[i] = Service.REGULAR_SERVICE;
+            } else if (j==2 && k < 4) {
+                results[i] = Service.FULL_SERVICE;
+            } else {
+                results[i] = null;
+            }
+            A2Element next = lossMatrix.get(i).get(j).get(k);
+            j = next.jCoord;
+            k = next.kCoord;
+        }
         return results; // REMOVE THIS LINE AND WRITE THIS METHOD
+    }
+
+    private static class A2Element {
+        public int val;
+        public int jCoord; // j coord this value was attained from
+        public int kCoord; // k coor this value was attained from
+
+        A2Element (int val, int j, int k) {
+            this.val = val;
+            this.jCoord = j;
+            this.kCoord = k;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("val: %s, nextJ: %s, nextK: %s", this.val, this.jCoord, this.kCoord);
+        }
     }
 
 }

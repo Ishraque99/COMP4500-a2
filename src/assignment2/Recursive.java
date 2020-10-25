@@ -76,9 +76,7 @@ public class Recursive {
                 currentHour, lastService, hoursSinceService);
         int serviceLoss = hourlyVolume[currentHour]; // loss if we start a service
 
-        // assume we have optimal loss upto now, and we have to decide for next hour
         int nextHr = currentHour +1;
-
         int nextNoService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
                 minorServiceCapacity, nextHr, lastService, hoursSinceService + 1);
         int nextMinService = serviceLoss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,

@@ -22,7 +22,7 @@ public class Main {
 
     @Target({PARAMETER, FIELD, ANNOTATION_TYPE, TYPE_USE})
     @Retention(RUNTIME)
-    @Size(min = 0, max = 13)
+    @Size(min = 0, max = 14)
     public @interface ValidSize {}
     @Property public void validationTest(@ValidSize List<@InRange(min = "0", max = "1000") Integer> a1,
                                          @ValidSize List<@InRange(min = "0", max = "1000") Integer> a2,
@@ -37,8 +37,24 @@ public class Main {
 
         int r = Recursive.optimalLossRecursive(a1Int, a2Int, a3Int, a4Int);
         int d = Dynamic.optimalLossDynamic(a1Int, a2Int, a3Int, a4Int);
-
         Assert.assertEquals(r, d);
+        checkServicesResult(a1Int, a2Int, a3Int, a4Int, r);
+    }
+
+    @Property public void dynServicesTest(@ValidSize List<@InRange(min = "0", max = "1000") Integer> a1,
+                                                     @ValidSize List<@InRange(min = "0", max = "1000") Integer> a2,
+                                                     @ValidSize List<@InRange(min = "0", max = "1000") Integer> a3,
+                                                     @ValidSize List<@InRange(min = "0", max = "1000") Integer> a4
+    ) {
+        int[] hourlyVolume = a1.stream().mapToInt(i->i).toArray();
+        int[] fullServiceCapacity = a2.stream().mapToInt(i->i).toArray();
+        int[] regularServiceCapacity = a3.stream().mapToInt(i->i).toArray();
+        int[] minorServiceCapacity = a4.stream().mapToInt(i->i).toArray();
+
+        int expectedResult = Recursive.optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity);
+
+        checkServicesResult(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity, expectedResult);
     }
 
     @Target({PARAMETER, FIELD, ANNOTATION_TYPE, TYPE_USE})
@@ -63,7 +79,7 @@ public class Main {
 
     public static void main(String[] args) {
 //        perfTests(2000, 14, 4, "out1.txt");
-        perfTest2(2000, 1500, 2, "out2.txt");
+        perfTest2(2000, 2000, 2, "out2.txt");
     }
 
     public static void perfTests(int maxVol, int arrSize, int timeoutSec, String outfile) {
@@ -109,7 +125,7 @@ public class Main {
 
     public static void perfTest2(int maxVol, int arrSize, int timeoutSec, String outfile) {
         ArrayList<ArrayList<Long>> results = new ArrayList<>();
-        for (int k = 1; k < arrSize; k++) {
+        for (int k = 1; k < arrSize; k+= 50) {
             ArrayList<Integer> hourlyVol = new ArrayList<>();
             ArrayList<Integer> fullService = new ArrayList<>();
             ArrayList<Integer> regService = new ArrayList<>();
@@ -129,7 +145,7 @@ public class Main {
             long s = System.nanoTime();
             int res = Dynamic.optimalLossDynamic(hSV, fSC, rSC, mSC);
             long d = System.nanoTime() - s;
-            if (k%100 == 0) {
+            if ((k-1)%100 == 0) {
                 System.out.println(k);
             }
             ArrayList<Long> thisRes = new ArrayList<>();
@@ -209,7 +225,7 @@ public class Main {
                                             int[] minorServiceCapacity, int expectedResult) {
         Service[] actualServices = Dynamic.optimalServicesDynamic(hourlyVolume, fullServiceCapacity,
                 regularServiceCapacity, minorServiceCapacity);
-        System.out.println(Arrays.toString(actualServices)); //print the result, uncomment to see the result
+//        System.out.println(Arrays.toString(actualServices)); //print the result, uncomment to see the result
         checkSolutionValidity(actualServices, hourlyVolume);
         int solutionCost = getCost(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
                 minorServiceCapacity, actualServices);
