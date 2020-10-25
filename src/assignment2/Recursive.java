@@ -69,21 +69,24 @@ public class Recursive {
 
         int k = hourlyVolume.length;
         if (currentHour == k) { return 0; } // we've exhausted our hours
+        // NOTE: we can service at hour 0. so we need to make a decision first, before calling later times.
 
+        // loss given no service
         int loss = lossFn(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity,
                 currentHour, lastService, hoursSinceService);
+        int serviceLoss = hourlyVolume[currentHour];
 
         // assume we have optimal loss upto now, and we have to decide for next hour
         int nextHr = currentHour +1;
 
         int nextNoService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
                 minorServiceCapacity, nextHr, lastService, hoursSinceService + 1);
-        int nextMinService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, -1);
-        int nextRegService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, -2);
-        int nextFullService = loss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
-                minorServiceCapacity, nextHr, Service.FULL_SERVICE, -4);
+        int nextMinService = serviceLoss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.MINOR_SERVICE, 0);
+        int nextRegService = serviceLoss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.REGULAR_SERVICE, -1);
+        int nextFullService = serviceLoss + optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
+                minorServiceCapacity, nextHr, Service.FULL_SERVICE, -3);
 
         int[] results = {nextNoService, nextMinService, nextRegService, nextFullService};
         int m = Integer.MAX_VALUE;

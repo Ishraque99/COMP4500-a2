@@ -1,5 +1,6 @@
 package assignment2.test;
 
+import assignment2.Dynamic;
 import assignment2.Recursive;
 import org.junit.Assert;
 import org.junit.Test;
@@ -13,6 +14,17 @@ public class RecursiveTest {
         int[] regularServiceCapacity = {70,50,40,30,20,10};
         int[] minorServiceCapacity = {50,40,20,10};
         int expectedResult = 75;
+
+        Assert.assertEquals(expectedResult, Recursive.optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity));
+    }
+
+    @Test
+    public void dynTest() {
+        int[] hourlyVolume =       {100, 100};
+        int[] fullServiceCapacity = {10, 10};
+        int[] regularServiceCapacity = {70,50,40,30,20,10};
+        int[] minorServiceCapacity = {100, 100};
+        int expectedResult = 100;
 
         Assert.assertEquals(expectedResult, Recursive.optimalLossRecursive(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity));
     }

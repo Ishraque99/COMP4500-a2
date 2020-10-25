@@ -34,14 +34,13 @@ public class Dynamic {
             int[] fullServiceCapacity, int [] regularServiceCapacity, int[] minorServiceCapacity) {
 
         int totalHours = hourlyVolume.length;
-//        if (fullServiceCapacity.length == 0) { return 0; }
-
+        if (totalHours == 0) { return 0; }
         // NOTE: extend each service array to include waiting time for servicing.
         // Thus we don't need to consider a separate entry for out of service state
         ArrayList<Integer> fulCapWithWait = new ArrayList<>();
         for (int i = 0; i < 4; i++) { fulCapWithWait.add(0); }
         for (int x: fullServiceCapacity) { fulCapWithWait.add(x); }
-        if (fullServiceCapacity.length == 0) { fulCapWithWait.add(0); }
+        if (fullServiceCapacity.length == 0) { fulCapWithWait.add(0); } // if fullService is empty we need valid index
 
         ArrayList<Integer> regCapWithWait = new ArrayList<>();
         for (int i = 0; i < 2; i++) { regCapWithWait.add(0); }
@@ -64,11 +63,11 @@ public class Dynamic {
                 lossMatrix.get(i).add(new ArrayList<>());
                 int cap;
                 if (j==0) {
-                    cap = minCapWithWait.size();
+                    cap = Math.min(minCapWithWait.size(), hourlyVolume.length + 1);
                 } else if (j==1) {
-                    cap = regCapWithWait.size();
+                    cap = Math.min(regCapWithWait.size(), hourlyVolume.length + 2);
                 } else { // j==2
-                    cap = fulCapWithWait.size();
+                    cap = Math.min(fulCapWithWait.size(), hourlyVolume.length + 4);
                 }
                 for (int k = 0; k < cap; k++) {
                     if (i==totalHours) {
@@ -85,11 +84,11 @@ public class Dynamic {
             for (int j = 0; j < 3; j++) {
                 int cap;
                 if (j==0) {
-                    cap = minCapWithWait.size();
+                    cap = Math.min(minCapWithWait.size(), hourlyVolume.length + 1);
                 } else if (j==1) {
-                    cap = regCapWithWait.size();
+                    cap = Math.min(regCapWithWait.size(), hourlyVolume.length + 2);
                 } else { // j==2
-                    cap = fulCapWithWait.size();
+                    cap = Math.min(fulCapWithWait.size(), hourlyVolume.length + 4);
                 }
                 for (int k = 0; k<cap; k++) {
                     int thisLoss = hourlyVolume[i] - serviceMap.get(j).get(k);
@@ -118,7 +117,10 @@ public class Dynamic {
         }
 
         // we want to return t=0 with a recent full service
-        return lossMatrix.get(0).get(2).get(4); // REMOVE THIS LINE AND WRITE THIS METHOD
+        int minCapAt0 = lossMatrix.get(0).get(0).get(0);
+        int regCapAt0 = lossMatrix.get(0).get(1).get(0);
+        int fulCapAt0 = lossMatrix.get(0).get(2).get(4);
+        return Math.min(minCapAt0, Math.min(regCapAt0, fulCapAt0)); // REMOVE THIS LINE AND WRITE THIS METHOD
     }
 
 
