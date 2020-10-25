@@ -52,7 +52,7 @@ public class Dynamic {
 
         int totalHours = hourlyVolume.length;
         // NOTE: extend each service array to include waiting time for servicing.
-        // Thus we don't need to consider a separate entry for out of service state
+        // Thus we don't need to consider a separate condition for out of service state
         ArrayList<Integer> fulCapWithWait = new ArrayList<>();
         for (int i = 0; i < 4; i++) { fulCapWithWait.add(0); }
         for (int i = 0; i < Math.min(fullServiceCapacity.length, hourlyVolume.length); i++) {
@@ -101,21 +101,16 @@ public class Dynamic {
                 for (int k = 0; k<cap; k++) {
                     int thisLoss = hourlyVolume[i] - serviceMap.get(j).get(k);
                     if (thisLoss < 0) { thisLoss = 0; } // min floor for loss val
+                    int serv1Loss = lossMatrix.get(i+1).get(0).get(0);
+                    int serv2Loss = lossMatrix.get(i+1).get(1).get(0);
+                    int serv3Loss = lossMatrix.get(i+1).get(2).get(0);
                     if (k==cap-1) {
                         // if k is last value of index, it depends on the next hour service
                         // of which there are 3 possible
-                        int serv1Loss = lossMatrix.get(i+1).get(0).get(0);
-                        int serv2Loss = lossMatrix.get(i+1).get(1).get(0);
-                        int serv3Loss = lossMatrix.get(i+1).get(2).get(0);
-
                         int finalLoss = Math.min(serv1Loss, Math.min(serv2Loss, serv3Loss)) + thisLoss;
                         lossMatrix.get(i).get(j).set(k, finalLoss);
                     } else {
                         // else it depends on next hour service start, or just the next second of the same service
-                        int serv1Loss = lossMatrix.get(i+1).get(0).get(0);
-                        int serv2Loss = lossMatrix.get(i+1).get(1).get(0);
-                        int serv3Loss = lossMatrix.get(i+1).get(2).get(0);
-
                         int lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
                         int finalLoss = thisLoss + Math.min(serv1Loss, Math.min(serv2Loss, Math.min(serv3Loss, lastLoss)));
                         lossMatrix.get(i).get(j).set(k, finalLoss);
@@ -172,7 +167,7 @@ public class Dynamic {
         if (totalHours == 0) { return results; }
 
         // NOTE: extend each service array to include waiting time for servicing.
-        // Thus we don't need to consider a separate entry for out of service state
+        // Thus we don't need to consider a separate condition for out of service state
         ArrayList<Integer> fulCapWithWait = new ArrayList<>();
         for (int i = 0; i < 4; i++) { fulCapWithWait.add(0); }
         for (int i = 0; i < Math.min(fullServiceCapacity.length, hourlyVolume.length); i++) {
@@ -229,6 +224,7 @@ public class Dynamic {
                         // of which there are 3 possible
                         A2Element[] check = {serv1Loss, serv2Loss, serv3Loss};
 
+                        // map how we obtained this loss value from t+1
                         int idx = -1;
                         int m = Integer.MAX_VALUE;
                         for (int l = 0; l < 3; l++) { if (check[l].val < m) { m = check[l].val; idx = l; } }
@@ -240,19 +236,12 @@ public class Dynamic {
                         A2Element lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
                         A2Element[] check = {serv1Loss, serv2Loss, serv3Loss, lastLoss};
 
+                        // map how we obtained this loss value from t+1
                         int idx = -1;
                         int m = Integer.MAX_VALUE;
                         int nextK = 0;
-                        for (int l = 0; l < 4; l++) {
-                            if (check[l].val < m) {
-                                m = check[l].val;
-                                idx = l;
-                            }
-                        }
-                        if (idx==3) {
-                            idx = j;
-                            nextK = k+1;
-                        }
+                        for (int l = 0; l < 4; l++) { if (check[l].val < m) { m = check[l].val; idx = l; } }
+                        if (idx==3) { idx = j; nextK = k+1; }
 
                         int finalLoss = thisLoss + m;
                         lossMatrix.get(i).get(j).set(k, new A2Element(finalLoss, idx, nextK));
@@ -261,8 +250,7 @@ public class Dynamic {
             }
         }
 
-//        System.out.println(lossMatrix);
-        // we want to return t=0 with a recent full service, or start of service
+        // find the best possible starting
         int j = 2;
         int k = 4;
         A2Element minCapAt0 = lossMatrix.get(0).get(0).get(0);
@@ -270,16 +258,9 @@ public class Dynamic {
         A2Element fulCapAt0 = lossMatrix.get(0).get(2).get(0);
         A2Element afterFulAt0 = lossMatrix.get(0).get(j).get(k);
         A2Element[] check = {minCapAt0, regCapAt0, fulCapAt0, afterFulAt0};
-//        System.out.println(String.format("Init Check : %s, %s, %s, %s", check[0], check[1], check[2], check[3]));
         int idx = -1;
         int m = Integer.MAX_VALUE;
-        for (int l = 0; l < 4; l++) {
-            if (check[l].val < m) {
-                m = check[l].val;
-                idx = l;
-            }
-        }
-//        System.out.println(String.format("Idx: %s", idx));
+        for (int l = 0; l < 4; l++) { if (check[l].val < m) { m = check[l].val; idx = l; } }
         if (idx == 0) {
             results[0] = Service.MINOR_SERVICE;
         } else if (idx == 1) {
@@ -291,8 +272,8 @@ public class Dynamic {
         }
         j = check[idx].jCoord;
         k = check[idx].kCoord;
+        // continue along the mappings until we reach the end
         for (int i = 1; i < totalHours; i++) {
-//            System.out.println(String.format("j: %s, k: %s", j, k));
             if (j==0 && k < 1) {
                 results[i] = Service.MINOR_SERVICE;
             } else if (j==1 && k < 2) {
@@ -306,9 +287,10 @@ public class Dynamic {
             j = next.jCoord;
             k = next.kCoord;
         }
-        return results; // REMOVE THIS LINE AND WRITE THIS METHOD
+        return results;
     }
 
+    // container to help track how we got from base case to result
     private static class A2Element {
         public int val;
         public int jCoord; // j coord this value was attained from
@@ -320,10 +302,10 @@ public class Dynamic {
             this.kCoord = k;
         }
 
+        // for debug purposes only
         @Override
         public String toString() {
             return String.format("val: %s, nextJ: %s, nextK: %s", this.val, this.jCoord, this.kCoord);
         }
     }
-
 }

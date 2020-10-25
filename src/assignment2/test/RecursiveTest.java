@@ -1,6 +1,5 @@
 package assignment2.test;
 
-import assignment2.Dynamic;
 import assignment2.Recursive;
 import org.junit.Assert;
 import org.junit.Test;

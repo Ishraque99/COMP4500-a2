@@ -24,10 +24,16 @@ public class Main {
     @Retention(RUNTIME)
     @Size(min = 0, max = 14)
     public @interface ValidSize {}
-    @Property public void validationTest(@ValidSize List<@InRange(min = "0", max = "1000") Integer> a1,
-                                         @ValidSize List<@InRange(min = "0", max = "1000") Integer> a2,
-                                         @ValidSize List<@InRange(min = "0", max = "1000") Integer> a3,
-                                         @ValidSize List<@InRange(min = "0", max = "1000") Integer> a4
+
+    @Target({PARAMETER, FIELD, ANNOTATION_TYPE, TYPE_USE})
+    @Retention(RUNTIME)
+    @InRange(min = "0", max = "100000")
+    public @interface ValidRange {}
+
+    @Property public void validationTest(@ValidSize List<@ValidRange Integer> a1,
+                                         @ValidSize List<@ValidRange Integer> a2,
+                                         @ValidSize List<@ValidRange Integer> a3,
+                                         @ValidSize List<@ValidRange Integer> a4
                                          ) {
 
         int[] a1Int = a1.stream().mapToInt(i->i).toArray();
@@ -61,10 +67,10 @@ public class Main {
     @Retention(RUNTIME)
     @Size(min = 0, max = 500)
     public @interface ValidSize2 {}
-    @Property public void exampleDynamicServicesTest(@ValidSize2 List<@InRange(min = "0", max = "1000") Integer> a1,
-                                           @ValidSize2 List<@InRange(min = "0", max = "1000") Integer> a2,
-                                           @ValidSize2 List<@InRange(min = "0", max = "1000") Integer> a3,
-                                           @ValidSize2 List<@InRange(min = "0", max = "1000") Integer> a4
+    @Property public void exampleDynamicServicesTest(@ValidSize2 List<@InRange(min = "0", max = "10") Integer> a1,
+                                           @ValidSize2 List<@InRange(min = "0", max = "10") Integer> a2,
+                                           @ValidSize2 List<@InRange(min = "0", max = "10") Integer> a3,
+                                           @ValidSize2 List<@InRange(min = "0", max = "10") Integer> a4
     ) {
         int[] hourlyVolume = a1.stream().mapToInt(i->i).toArray();
         int[] fullServiceCapacity = a2.stream().mapToInt(i->i).toArray();
