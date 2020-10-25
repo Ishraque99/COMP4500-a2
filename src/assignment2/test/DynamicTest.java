@@ -21,6 +21,17 @@ public class DynamicTest {
     }
 
     @Test
+    public void exampleDynamicTest2() {
+        int[] hourlyVolume =       {50,40,90,10,5,100};
+        int[] fullServiceCapacity = {100,90,80,70,60,50,40,30,20,10};
+        int[] regularServiceCapacity = {70,50,40,30,20,10};
+        int[] minorServiceCapacity = {50,40,20,10};
+        int expectedResult = 75;
+
+        Assert.assertEquals(expectedResult, Dynamic.optimalLossDynamic(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity));
+    }
+
+    @Test
     public void dynTest() {
         int[] hourlyVolume =       {100, 100};
         int[] fullServiceCapacity = {10, 10};
@@ -42,6 +53,17 @@ public class DynamicTest {
         checkServicesResult(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity, expectedResult);
     }
 
+    @Test
+    public void exampleDynamicServicesTest2() {
+        int[] hourlyVolume =       {100, 100};
+        int[] fullServiceCapacity = {10, 10};
+        int[] regularServiceCapacity = {70,50,40,30,20,10};
+        int[] minorServiceCapacity = {100, 100};
+        int expectedResult = 100;
+
+        checkServicesResult(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity, expectedResult);
+    }
+
     /**
      * Check that Dynamic.optimalActivitiesDynamic produces a valid list of services that would
      * produce the expectedResult
@@ -50,7 +72,7 @@ public class DynamicTest {
                                        int[] minorServiceCapacity, int expectedResult) {
         Service[] actualServices = Dynamic.optimalServicesDynamic(hourlyVolume, fullServiceCapacity,
                 regularServiceCapacity, minorServiceCapacity);
-        //System.out.println(Arrays.toString(actualServices)); //print the result, uncomment to see the result
+        System.out.println(Arrays.toString(actualServices)); //print the result, uncomment to see the result
         checkSolutionValidity(actualServices, hourlyVolume);
         int solutionCost = getCost(hourlyVolume, fullServiceCapacity, regularServiceCapacity,
                 minorServiceCapacity, actualServices);
