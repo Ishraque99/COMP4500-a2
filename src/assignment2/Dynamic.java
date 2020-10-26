@@ -105,12 +105,12 @@ public class Dynamic {
                     int serv2Loss = lossMatrix.get(i+1).get(1).get(0);
                     int serv3Loss = lossMatrix.get(i+1).get(2).get(0);
                     if (k==cap-1) {
-                        // if k is last value of index, it depends on the next hour service
+                        // if k is last value of index, it depends on the next hour service start
                         // of which there are 3 possible
                         int finalLoss = Math.min(serv1Loss, Math.min(serv2Loss, serv3Loss)) + thisLoss;
                         lossMatrix.get(i).get(j).set(k, finalLoss);
                     } else {
-                        // else it depends on next hour service start, or just the next second of the same service
+                        // else it depends on next hour service start, or just the next hour of the same capacity
                         int lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
                         int finalLoss = thisLoss + Math.min(serv1Loss, Math.min(serv2Loss, Math.min(serv3Loss, lastLoss)));
                         lossMatrix.get(i).get(j).set(k, finalLoss);
@@ -220,7 +220,7 @@ public class Dynamic {
                     A2Element serv2Loss = lossMatrix.get(i+1).get(1).get(0); // reg
                     A2Element serv3Loss = lossMatrix.get(i+1).get(2).get(0); // ful
                     if (k==cap-1) {
-                        // if k is last value of index, it depends on the next hour service
+                        // if k is last value of index, it depends on the next hour service start
                         // of which there are 3 possible
                         A2Element[] check = {serv1Loss, serv2Loss, serv3Loss};
 
@@ -232,7 +232,7 @@ public class Dynamic {
                         int finalLoss = m + thisLoss;
                         lossMatrix.get(i).get(j).set(k, new A2Element(finalLoss, idx, 0));
                     } else {
-                        // else it depends on next hour service start, or just the next second of the same service
+                        // else it depends on next hour service start, or just the next hour of the same capacity
                         A2Element lastLoss = lossMatrix.get(i+1).get(j).get(k+1);
                         A2Element[] check = {serv1Loss, serv2Loss, serv3Loss, lastLoss};
 
