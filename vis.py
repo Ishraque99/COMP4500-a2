@@ -19,7 +19,7 @@ for idx, val in enumerate(x1):
     g[idx] = base*(x1[idx]**2)
 plt.plot(x1, r1, label='N^2')
 # plt.plot(x1, g, label="base n2")
-# plt.plot(x1, d1, label='Dynamic')
+plt.plot(x1, d1, label='Dynamic')
 
 plt.xlabel('prob_size')
 plt.ylabel('runtime')

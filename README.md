@@ -1,6 +1,27 @@
 # COMP4500-a2
 
-Solution to assignment 2 for COMP4500
+Solution to assignment 2 for COMP4500.
+
+This project implements an optimal algorithmic solution to the assignment 2 problem spec.
+First, a recursive solution is made, which is then used to develop and validate a dynamic programming solution.
+
+This repo serves as a demonstration to developing and optimising algorithms using *property based testing*.
+[quickcheck](https://github.com/pholser/junit-quickcheck) is used to generate test cases for validating both solutions.
+
+The driver script in `Main.java` validates and runs the algorithms with increasing problem sizes and writes the running time to a specified output file. `vis.py` is used to ingest the output file and visualise the asymptotic growth of the algorithms using `matplotlib`.
+
+## Project structure
+
+```bash
+/ ->|
+    -> src/assigment2/        # Solution directory
+    |
+    ->src/assigment2/test     # Manual tests
+    |
+    ->src/Main.java           # Automated/Generated tests
+    |
+    -> vis.py                 # Python script for visualising asymptotic growth
+```
 
 ## Recursive pseudocode
 

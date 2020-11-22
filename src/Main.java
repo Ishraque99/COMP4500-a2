@@ -30,6 +30,8 @@ public class Main {
     @InRange(min = "0", max = "100000")
     public @interface ValidRange {}
 
+    // assuming a valid recursive implementation, generate test cases to check
+    // dynamic solutions match recursive ones
     @Property public void validationTest(@ValidSize List<@ValidRange Integer> a1,
                                          @ValidSize List<@ValidRange Integer> a2,
                                          @ValidSize List<@ValidRange Integer> a3,
@@ -47,6 +49,7 @@ public class Main {
         checkServicesResult(a1Int, a2Int, a3Int, a4Int, r);
     }
 
+    // ensure dynamic services list is valid for small input
     @Property public void dynServicesTest(@ValidSize List<@InRange(min = "0", max = "1000") Integer> a1,
                                                      @ValidSize List<@InRange(min = "0", max = "1000") Integer> a2,
                                                      @ValidSize List<@InRange(min = "0", max = "1000") Integer> a3,
@@ -67,6 +70,8 @@ public class Main {
     @Retention(RUNTIME)
     @Size(min = 0, max = 500)
     public @interface ValidSize2 {}
+
+    // ensure dynamic services are valid for larger inputs
     @Property public void exampleDynamicServicesTest(@ValidSize2 List<@InRange(min = "0", max = "10") Integer> a1,
                                            @ValidSize2 List<@InRange(min = "0", max = "10") Integer> a2,
                                            @ValidSize2 List<@InRange(min = "0", max = "10") Integer> a3,
@@ -83,11 +88,13 @@ public class Main {
         checkServicesResult(hourlyVolume, fullServiceCapacity, regularServiceCapacity, minorServiceCapacity, expectedResult);
     }
 
+    // run performance tests here
     public static void main(String[] args) {
 //        perfTests(2000, 14, 4, "out1.txt");
         perfTest2(2000, 2000, 2, "out2.txt");
     }
 
+    // compare recursive and dynamic growth rates
     public static void perfTests(int maxVol, int arrSize, int timeoutSec, String outfile) {
         ArrayList<ArrayList<Long>> results = new ArrayList<>();
         for (int k = 1; k < arrSize; k++) {
@@ -129,6 +136,7 @@ public class Main {
         }
     }
 
+    // get dynamic growth rates for much larger problems sizes
     public static void perfTest2(int maxVol, int arrSize, int timeoutSec, String outfile) {
         ArrayList<ArrayList<Long>> results = new ArrayList<>();
         for (int k = 1; k < arrSize; k+= 50) {
@@ -175,6 +183,7 @@ public class Main {
         }
     }
 
+    // get the time taken for a given recursive run
     public static long timeRecursive(int timeout, int[] hV, int[] fSC, int[] rSC, int[] mSC) {
         AtomicLong time = new AtomicLong(-1);
         final Runnable stuffToDo = new Thread(() -> {
@@ -199,6 +208,7 @@ public class Main {
         }
     }
 
+    // get time taken for given dynamic run
     public static long timeDynamic(int timeout, int[] hV, int[] fSC, int[] rSC, int[] mSC) {
         AtomicLong time = new AtomicLong(-1);
         final Runnable stuffToDo = new Thread(() -> {
